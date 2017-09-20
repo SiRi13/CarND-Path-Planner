@@ -10,7 +10,19 @@
 #include "json.hpp"
 #include "spline.h"
 
+#define MAX_VELOCITY 49.5
+#define DELTA_VELOCITY 0.224
+
 #define MPH_TO_MS 2.24
+#define MIN_SAFETY_DIST 40
+
+#define SENSOR_FUSION_CAR_ID 0
+#define SENSOR_FUSION_CAR_X 1
+#define SENSOR_FUSION_CAR_Y 2
+#define SENSOR_FUSION_CAR_VX 3
+#define SENSOR_FUSION_CAR_VY 4
+#define SENSOR_FUSION_CAR_S 5
+#define SENSOR_FUSION_CAR_D 6
 
 using namespace std;
 
@@ -165,7 +177,7 @@ int main() {
   // The max s value before wrapping around the track back to 0
   double max_s = 6945.554;
   // max velocity in mph
-  double max_v = 49.9;
+  double ref_v = DELTA_VELOCITY;
   // zero-based lane index from left to right
   int lane = 1;
 
@@ -192,7 +204,7 @@ int main() {
   }
 
   h.onMessage([&map_waypoints_x, &map_waypoints_y, &map_waypoints_s,
-               &map_waypoints_dx, &map_waypoints_dy, &max_s, &max_v,
+               &map_waypoints_dx, &map_waypoints_dy, &max_s, &ref_v,
                &lane](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                       uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -223,7 +235,7 @@ int main() {
           auto previous_path_x = j[1]["previous_path_x"];
           auto previous_path_y = j[1]["previous_path_y"];
           // Previous path's end s and d values
-          // double end_path_s = j[1]["end_path_s"];
+          double end_path_s = j[1]["end_path_s"];
           // double end_path_d = j[1]["end_path_d"];
 
           unsigned prev_path_size = previous_path_x.size();
@@ -232,10 +244,43 @@ int main() {
           // the road.
           auto sensor_fusion = j[1]["sensor_fusion"];
 
-          json msgJson;
-
           // TODO: define a path made up of (x,y) points that the car will visit
           // sequentially every .02 seconds
+
+          if (prev_path_size > 0) {
+            car_s = end_path_s;
+          }
+
+          bool too_close = false;
+          double lane_v = MAX_VELOCITY;
+
+          // check sensor data of each detected vehicle
+          for (unsigned i = 0; i < sensor_fusion.size(); ++i) {
+            // get lane of car
+            float d = sensor_fusion[i][SENSOR_FUSION_CAR_D];
+            if (d < (2 + 4 * lane + 2) && d > (2 + 4 * lane - 2)) {
+              // calculate velocity magnitude of car from vx and vy
+              double vx = sensor_fusion[i][SENSOR_FUSION_CAR_VX];
+              double vy = sensor_fusion[i][SENSOR_FUSION_CAR_VY];
+              double other_car_v = sqrt((vx * vx) + (vy * vy));
+
+              // calculate s for other car when previous path is driven
+              double other_car_s = sensor_fusion[i][SENSOR_FUSION_CAR_S];
+              other_car_s += ((double)prev_path_size * 0.02 * other_car_v);
+
+              if (other_car_s > car_s) {
+                double dist = other_car_s - car_s;
+                if (dist < MIN_SAFETY_DIST) {
+                  too_close = true;
+                  if (lane_v > other_car_v) {
+                    lane_v = other_car_v;
+                  }
+                } else if (dist < MIN_SAFETY_DIST * 1.1) {
+                  lane_v = other_car_v;
+                }
+              }
+            }
+          }
 
           // anchor points which are widely spread and evenly spaced
           std::vector<double> x_anchor;
@@ -307,9 +352,19 @@ int main() {
           double target_dist =
               sqrt((target_x * target_x) + (target_y + target_y));
           double x_next_pos = 0.0;
-          double n_pos_points = target_dist / (0.02 * max_v / MPH_TO_MS);
 
           for (unsigned i = 0; i < 50 - prev_path_size; ++i) {
+            if ((too_close && ref_v > lane_v) ||
+                (!too_close && lane_v < MAX_VELOCITY)) {
+              ref_v -= DELTA_VELOCITY;
+            } else if (too_close) {
+              printf("too_close: %f = %f\n", ref_v, lane_v);
+              ref_v = lane_v * 1.25;
+            } else if (ref_v < MAX_VELOCITY) {
+              ref_v += DELTA_VELOCITY;
+            }
+
+            double n_pos_points = target_dist / (0.02 * ref_v / MPH_TO_MS);
             double x = x_next_pos + target_x / n_pos_points;
             double y = anchor_spline(x);
 
@@ -325,6 +380,7 @@ int main() {
             next_y_vals.push_back(y);
           }
 
+          json msgJson;
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
 
