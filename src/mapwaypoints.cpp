@@ -1,4 +1,4 @@
-#include "mapwaypoints.hpp"
+#include "map.waypoints.hpp"
 
 using namespace std;
 

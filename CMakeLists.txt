@@ -11,6 +11,7 @@ set(sources src/main.cpp
             src/helper.cpp
             src/mapwaypoints.cpp)
 
+include_directories(include)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 

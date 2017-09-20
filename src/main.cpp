@@ -9,7 +9,7 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "helper.hpp"
 #include "json.hpp"
-#include "mapwaypoints.hpp"
+#include "map.waypoints.hpp"
 #include "spline.h"
 
 using namespace std;
@@ -29,7 +29,7 @@ int main() {
   // max velocity in mph
   double ref_v = DELTA_VELOCITY;
   // zero-based lane index from left to right
-  int lane = 1;
+  int lane = CENTER_LANE;
 
   h.onMessage([&waypoints, &max_s, &ref_v, &lane](
                   uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
@@ -69,7 +69,7 @@ int main() {
 
           // Sensor Fusion Data, a list of all other cars on the same side of
           // the road.
-          auto sensor_fusion = j[1]["sensor_fusion"];
+          vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
 
           // TODO: define a path made up of (x,y) points that the car will visit
           // sequentially every .02 seconds
