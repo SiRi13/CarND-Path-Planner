@@ -35,51 +35,53 @@ void BehaviourPlanner::_lane_change_left() {
            cars_ahead_left[0][1],
            _peerCarsPerLane[LEFT_LANE][cars_ahead_left[0][0]]._d);
            */
-    if (cars_ahead_left[0][1] <= MIN_SAFETY_DIST) {
-      // car in same lane and too close
-      _lane_v = cars_ahead_left[0][2];
-      _next_state = "FC";
-      vector<vector<double>> cars_ahead_center = _peerCarsAhead[CENTER_LANE];
-      // printf("cars_ahead_center: %i\n",
-      // (int)cars_ahead_center.size());
-      if (cars_ahead_center.size() > 0) {
-        std::sort(
-            cars_ahead_center.begin(), cars_ahead_center.end(),
-            [](vector<double> a, vector<double> b) { return a[1] < b[1]; });
-        /* printf("car[%i] ahead_center @ %f in %f\n",
-        (int)cars_ahead_center[0][0],
-        cars_ahead_center[0][2] * MPH_TO_MS, cars_ahead_center[0][1]);
-        */
-        if (cars_ahead_center[0][1] > LANE_CHANGE_DIST_AHEAD) {
-          // car in center lane but far away
-          vector<vector<double>> cars_behind_center =
-              _peerCarsBehind[CENTER_LANE];
-
-          if (cars_behind_center.size() > 0) {
-            std::sort(
-                cars_behind_center.begin(), cars_behind_center.end(),
+    vector<vector<double>> cars_ahead_center = _peerCarsAhead[CENTER_LANE];
+    // printf("cars_ahead_center: %i\n",
+    // (int)cars_ahead_center.size());
+    if (cars_ahead_center.size() > 0) {
+      std::sort(cars_ahead_center.begin(), cars_ahead_center.end(),
                 [](vector<double> a, vector<double> b) { return a[1] < b[1]; });
-            /* printf("car[%i] behind center @ %f in %f\n",
-                   (int)cars_behind_center[0][0],
-                   cars_behind_center[0][2] * MPH_TO_MS,
-                   cars_behind_center[0][1]);
+      /* printf("car[%i] ahead_center @ %f in %f\n",
+      (int)cars_ahead_center[0][0],
+      cars_ahead_center[0][2] * MPH_TO_MS, cars_ahead_center[0][1]);
+      */
+      if (cars_ahead_center[0][1] > LANE_CHANGE_DIST_AHEAD) {
+        // car in center lane but far away
+        vector<vector<double>> cars_behind_center =
+            _peerCarsBehind[CENTER_LANE];
+
+        if (cars_behind_center.size() > 0) {
+          std::sort(
+              cars_behind_center.begin(), cars_behind_center.end(),
+              [](vector<double> a, vector<double> b) { return a[1] < b[1]; });
+          /* printf("car[%i] behind center @ %f in %f\n",
+                 (int)cars_behind_center[0][0],
+                 cars_behind_center[0][2] * MPH_TO_MS,
+                 cars_behind_center[0][1]);
+                 */
+          if (abs(cars_behind_center[0][1]) > LANE_CHANGE_DIST_BEHIND) {
+            /*printf("lane change dist behind: %f\n",
+                   abs(cars_behind_center[0][1]));
                    */
-            if (abs(cars_behind_center[0][1]) > LANE_CHANGE_DIST_BEHIND) {
-              _lane_idx = CENTER_LANE;
-              _next_state = "CLL";
-              _lane_v = MAX_VELOCITY;
-            }
-          } else {
             _lane_idx = CENTER_LANE;
             _next_state = "CLL";
             _lane_v = MAX_VELOCITY;
           }
+        } else {
+          _lane_idx = CENTER_LANE;
+          _next_state = "CLL";
+          _lane_v = MAX_VELOCITY;
         }
-      } else {
-        _lane_v = MAX_VELOCITY;
-        _lane_idx = CENTER_LANE;
-        _next_state = "CLL";
       }
+    } else {
+      _lane_v = MAX_VELOCITY;
+      _lane_idx = CENTER_LANE;
+      _next_state = "CLL";
+    }
+    if (cars_ahead_left[0][1] <= MIN_SAFETY_DIST) {
+      // car in same lane and too close
+      _lane_v = cars_ahead_left[0][2];
+      _next_state = "FC";
     }
   } else {
     _lane_v = MAX_VELOCITY;
@@ -209,44 +211,43 @@ void BehaviourPlanner::_lane_change_right() {
            cars_ahead_right[0][2] * MPH_TO_MS, cars_ahead_right[0][1],
            _peerCarsPerLane[LEFT_LANE][cars_ahead_right[0][0]]._d);
            */
-    if (cars_ahead_right[0][1] <= MIN_SAFETY_DIST) {
-      _lane_v = cars_ahead_right[0][2];
-      _next_state = "FC";
-      // printf("_peerCarsPerLane: %i\n",
-      // (int)_peerCarsAhead[CENTER_LANE].size());
-      vector<vector<double>> cars_ahead_center = _peerCarsAhead[CENTER_LANE];
-      if (cars_ahead_center.size() > 0) {
-        std::sort(
-            cars_ahead_center.begin(), cars_ahead_center.end(),
-            [](vector<double> a, vector<double> b) { return a[1] < b[1]; });
-        /* printf("car[%i] ahead center @ %f in %f\n",
-               (int)cars_ahead_center[0][0],
-               cars_ahead_center[0][2] * MPH_TO_MS, cars_ahead_center[0][1]);
-               */
-        if (cars_ahead_center[0][1] > LANE_CHANGE_DIST_AHEAD) {
-          vector<vector<double>> cars_behind_center =
-              _peerCarsBehind[CENTER_LANE];
-          if (cars_behind_center.size() > 0) {
-            std::sort(
-                cars_behind_center.begin(), cars_behind_center.end(),
+    // printf("_peerCarsPerLane: %i\n",
+    // (int)_peerCarsAhead[CENTER_LANE].size());
+    vector<vector<double>> cars_ahead_center = _peerCarsAhead[CENTER_LANE];
+    if (cars_ahead_center.size() > 0) {
+      std::sort(cars_ahead_center.begin(), cars_ahead_center.end(),
                 [](vector<double> a, vector<double> b) { return a[1] < b[1]; });
-            /* printf("car[%i] behind center @ %f in %f\n",
-                   (int)cars_behind_center[0][0],
-                   cars_behind_center[0][2] * MPH_TO_MS,
-                   cars_behind_center[0][1]);
-                   */
-            if (abs(cars_behind_center[0][1]) > LANE_CHANGE_DIST_BEHIND) {
-              _next_state = "CLL";
-              _lane_idx = CENTER_LANE;
-              _lane_v = cars_ahead_center[0][2];
-            }
-          } else {
+      /* printf("car[%i] ahead center @ %f in %f\n",
+             (int)cars_ahead_center[0][0],
+             cars_ahead_center[0][2] * MPH_TO_MS, cars_ahead_center[0][1]);
+             */
+      if (cars_ahead_center[0][1] > LANE_CHANGE_DIST_AHEAD) {
+        vector<vector<double>> cars_behind_center =
+            _peerCarsBehind[CENTER_LANE];
+        if (cars_behind_center.size() > 0) {
+          std::sort(
+              cars_behind_center.begin(), cars_behind_center.end(),
+              [](vector<double> a, vector<double> b) { return a[1] < b[1]; });
+          /* printf("car[%i] behind center @ %f in %f\n",
+                 (int)cars_behind_center[0][0],
+                 cars_behind_center[0][2] * MPH_TO_MS,
+                 cars_behind_center[0][1]);
+                 */
+          if (abs(cars_behind_center[0][1]) > LANE_CHANGE_DIST_BEHIND) {
             _next_state = "CLL";
             _lane_idx = CENTER_LANE;
             _lane_v = cars_ahead_center[0][2];
           }
+        } else {
+          _next_state = "CLL";
+          _lane_idx = CENTER_LANE;
+          _lane_v = cars_ahead_center[0][2];
         }
       }
+    }
+    if (_next_state == "KL" && cars_ahead_right[0][1] <= MIN_SAFETY_DIST) {
+      _lane_v = cars_ahead_right[0][2];
+      _next_state = "FC";
     }
   } else {
     _lane_v = MAX_VELOCITY;
