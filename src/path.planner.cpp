@@ -99,19 +99,9 @@ void PathPlanner::createPath() {
   double x_next_pos = 0.0;
 
   for (unsigned i = 0; i < 50 - _previousPath.get_path_size(); ++i) {
-    /*if ((next_state == "KL" && _ref_v > lane_v) ||
-        (next_state != "KL" && lane_v < MAX_VELOCITY)) {
-      _ref_v -= DELTA_VELOCITY;
-    } else if (next_state == "FC") {
-      printf("too_close: %f = %f\n", _ref_v, lane_v);
-      _ref_v = lane_v * 1.25;
-    } else if (_ref_v < MAX_VELOCITY) {
-      _ref_v += DELTA_VELOCITY;
-    }
-    */
     if (next_state == "FC") {
       if (_ref_v > lane_v) {
-        _ref_v -= DELTA_VELOCITY;
+        _ref_v -= DELTA_VELOCITY * 1.5;
       } else if (_ref_v <= lane_v) {
         _ref_v += DELTA_VELOCITY;
       }
