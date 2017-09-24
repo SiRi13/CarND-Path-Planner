@@ -1,14 +1,15 @@
 #ifndef WAYPOINT_HPP_
 #define WAYPOINT_HPP_
 
+#include "helper.hpp"
+#include "json.hpp"
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include "helper.hpp"
-#include "json.hpp"
 
 class MapWaypoints {
- public:
+public:
+  MapWaypoints();
   MapWaypoints(std::string data_file);
 
   ~MapWaypoints(){};
@@ -19,7 +20,7 @@ class MapWaypoints {
   std::vector<double> frenetToXY(double x, double y);
   std::vector<double> xyToFrenet(double x, double y, double theta);
 
- private:
+private:
   void _populateLists(std::string data_file);
   std::vector<double> _map_x;
   std::vector<double> _map_y;
@@ -28,4 +29,4 @@ class MapWaypoints {
   std::vector<double> _map_dy;
 };
 
-#endif  // WAYPOINT_HPP_
+#endif // WAYPOINT_HPP_

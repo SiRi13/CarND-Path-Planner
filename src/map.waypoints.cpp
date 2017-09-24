@@ -2,6 +2,10 @@
 
 using namespace std;
 
+MapWaypoints::MapWaypoints() {
+  // empty
+}
+
 MapWaypoints::MapWaypoints(string data_file) { _populateLists(data_file); }
 
 void MapWaypoints::_populateLists(string file) {
